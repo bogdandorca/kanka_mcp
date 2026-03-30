@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import uvicorn
 from dotenv import load_dotenv
@@ -11,6 +12,22 @@ from starlette.routing import Mount, Route
 
 from kanka_mcp_server.client import KankaClient
 from kanka_mcp_server.server import create_server
+
+
+def build_app(mcp: Any, campaign_id: str) -> Starlette:
+    async def health(request):
+        return JSONResponse({"status": "ok", "campaign_id": campaign_id})
+
+    mcp.settings.mount_path = "/"
+    mcp.settings.streamable_http_path = "/"
+
+    return Starlette(
+        routes=[
+            Route("/health", health),
+            Mount("/sse", app=mcp.sse_app("/")),
+            Mount("/mcp", app=mcp.streamable_http_app()),
+        ],
+    )
 
 
 def main() -> None:
@@ -34,16 +51,7 @@ def main() -> None:
 
     client = KankaClient(token=token, campaign_id=campaign_id)
     mcp = create_server(client)
-
-    async def health(request):
-        return JSONResponse({"status": "ok", "campaign_id": campaign_id})
-
-    app = Starlette(
-        routes=[
-            Route("/health", health),
-            Mount("/", app=mcp.sse_app()),
-        ],
-    )
+    app = build_app(mcp, campaign_id)
 
     uvicorn.run(app, host=args.host, port=args.port)
 

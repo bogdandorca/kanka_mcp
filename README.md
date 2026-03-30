@@ -1,6 +1,6 @@
 # Kanka MCP Server
 
-An MCP server that exposes [Kanka](https://kanka.io)'s REST API as MCP tools over SSE transport, allowing AI assistants to manage worldbuilding campaign data.
+An MCP server that exposes [Kanka](https://kanka.io)'s REST API as MCP tools over long-running HTTP transports, allowing AI assistants to manage worldbuilding campaign data from a permanently running server.
 
 ## Setup
 
@@ -15,17 +15,30 @@ An MCP server that exposes [Kanka](https://kanka.io)'s REST API as MCP tools ove
    KANKA_CAMPAIGN_ID=your-campaign-id
    ```
 
-3. Run:
+3. Run on your server:
    ```bash
    kanka-mcp-server
    # or with custom host/port:
    kanka-mcp-server --host 0.0.0.0 --port 9000
    ```
 
-4. Connect Claude Code:
+4. Put it behind a reverse proxy and keep the process running with your service manager of choice. An example `systemd --user` unit is included in `kanka-mcp-server.service`.
+
+5. Connect clients:
    ```bash
+   # Claude Code / SSE clients
    claude mcp add kanka --transport sse https://mcp.bogdandorca.com/sse
+
+   # Codex / streamable HTTP clients
+   # Point Codex at:
+   # https://mcp.bogdandorca.com/mcp
    ```
+
+## Endpoints
+
+- `/health` - health check
+- `/sse` - SSE transport for clients that expect SSE
+- `/mcp` - streamable HTTP transport for clients like Codex
 
 ## Tools
 

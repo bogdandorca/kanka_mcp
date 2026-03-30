@@ -1,8 +1,10 @@
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock
 
 import pytest
+from starlette.routing import Mount, Route
 
+from kanka_mcp_server.__main__ import build_app
 from kanka_mcp_server.server import create_server
 
 
@@ -183,3 +185,19 @@ async def test_delete_post(server, mock_client):
     mock_client.delete_post.assert_called_once_with(1, 10)
     data = json.loads(result[0].text)
     assert data["message"] == "Entity deleted successfully"
+
+
+def test_build_app_mounts_sse_streamable_http_and_health():
+    mcp = Mock()
+    mcp.settings = type("Settings", (), {"mount_path": "/", "streamable_http_path": "/mcp"})()
+    mcp.sse_app.return_value = Mock()
+    mcp.streamable_http_app.return_value = Mock()
+
+    app = build_app(mcp, "123")
+
+    route_paths = {route.path for route in app.routes if isinstance(route, (Route, Mount))}
+    assert route_paths == {"/health", "/sse", "/mcp"}
+    assert mcp.settings.mount_path == "/"
+    assert mcp.settings.streamable_http_path == "/"
+    mcp.sse_app.assert_called_once_with("/")
+    mcp.streamable_http_app.assert_called_once_with()
