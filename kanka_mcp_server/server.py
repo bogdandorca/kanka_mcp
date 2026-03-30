@@ -1,7 +1,9 @@
 import json
+import os
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import TextContent
 
 from kanka_mcp_server.client import KankaClient
@@ -20,8 +22,38 @@ def _text(data: Any) -> list[TextContent]:
     return [TextContent(type="text", text=json.dumps(data, indent=2))]
 
 
+def _split_csv_env(name: str) -> list[str]:
+    value = os.environ.get(name, "")
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _transport_security() -> TransportSecuritySettings:
+    allowed_hosts = ["127.0.0.1:*", "localhost:*", "[::1]:*"]
+    allowed_origins = ["http://127.0.0.1:*", "http://localhost:*", "http://[::1]:*"]
+
+    public_hosts = _split_csv_env("KANKA_MCP_ALLOWED_HOSTS")
+    if not public_hosts:
+        public_host = os.environ.get("KANKA_MCP_PUBLIC_HOST", "").strip()
+        if public_host:
+            public_hosts = [public_host]
+
+    for host in public_hosts:
+        allowed_hosts.extend([host, f"{host}:*"])
+        allowed_origins.extend([f"https://{host}", f"https://{host}:*", f"http://{host}", f"http://{host}:*"])
+
+    extra_origins = _split_csv_env("KANKA_MCP_ALLOWED_ORIGINS")
+    allowed_origins.extend(extra_origins)
+
+    # Preserve DNS rebinding protection while allowing the configured public hostnames.
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=sorted(set(allowed_hosts)),
+        allowed_origins=sorted(set(allowed_origins)),
+    )
+
+
 def create_server(client: KankaClient) -> FastMCP:
-    mcp = FastMCP("Kanka MCP Server")
+    mcp = FastMCP("Kanka MCP Server", transport_security=_transport_security())
 
     @mcp.tool()
     async def find_entities(

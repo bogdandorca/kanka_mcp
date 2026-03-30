@@ -13,6 +13,11 @@ An MCP server that exposes [Kanka](https://kanka.io)'s REST API as MCP tools ove
    ```
    KANKA_TOKEN=your-kanka-api-token
    KANKA_CAMPAIGN_ID=your-campaign-id
+   # Required when running behind a reverse proxy with a public hostname
+   KANKA_MCP_PUBLIC_HOST=your-mcp-host.example.com
+   # Optional comma-separated overrides
+   # KANKA_MCP_ALLOWED_HOSTS=your-mcp-host.example.com,alternate-host.example.com
+   # KANKA_MCP_ALLOWED_ORIGINS=https://your-codex-origin.example.com
    ```
 
 3. Run on your server:
