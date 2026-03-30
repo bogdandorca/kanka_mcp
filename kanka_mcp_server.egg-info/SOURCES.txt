@@ -1,0 +1,9 @@
+pyproject.toml
+kanka_mcp_server/__init__.py
+kanka_mcp_server/__main__.py
+kanka_mcp_server.egg-info/PKG-INFO
+kanka_mcp_server.egg-info/SOURCES.txt
+kanka_mcp_server.egg-info/dependency_links.txt
+kanka_mcp_server.egg-info/entry_points.txt
+kanka_mcp_server.egg-info/requires.txt
+kanka_mcp_server.egg-info/top_level.txt
