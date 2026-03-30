@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import os
 import sys
 from pathlib import Path
@@ -20,12 +21,19 @@ def build_app(mcp: Any, campaign_id: str) -> Starlette:
 
     mcp.settings.mount_path = "/"
     mcp.settings.streamable_http_path = "/"
+    streamable_http_app = mcp.streamable_http_app()
+
+    @contextlib.asynccontextmanager
+    async def lifespan(app):
+        async with mcp.session_manager.run():
+            yield
 
     return Starlette(
+        lifespan=lifespan,
         routes=[
             Route("/health", health),
             Mount("/sse", app=mcp.sse_app("/")),
-            Mount("/mcp", app=mcp.streamable_http_app()),
+            Mount("/mcp", app=streamable_http_app),
         ],
     )
 
