@@ -125,3 +125,61 @@ async def test_search_entities(server, mock_client):
     mock_client.search.assert_called_once_with("dragon")
     data = json.loads(result[0].text)
     assert data["data"][0]["name"] == "Dragon Lord"
+
+
+@pytest.mark.asyncio
+async def test_list_posts(server, mock_client):
+    mock_client.list_posts.return_value = {
+        "data": [{"id": 10, "name": "Backstory"}]
+    }
+
+    result = await call_tool(server, "list_posts", {"entity_id": 1})
+    mock_client.list_posts.assert_called_once_with(1)
+    data = json.loads(result[0].text)
+    assert data["data"][0]["name"] == "Backstory"
+
+
+@pytest.mark.asyncio
+async def test_create_post(server, mock_client):
+    mock_client.create_post.return_value = {
+        "data": {"id": 11, "name": "New Note"}
+    }
+
+    result = await call_tool(
+        server,
+        "create_post",
+        {"entity_id": 1, "name": "New Note", "entry": "Content"},
+    )
+    mock_client.create_post.assert_called_once_with(1, name="New Note", entry="Content")
+    data = json.loads(result[0].text)
+    assert data["data"]["name"] == "New Note"
+
+
+@pytest.mark.asyncio
+async def test_update_post(server, mock_client):
+    mock_client.update_post.return_value = {
+        "data": {"id": 10, "name": "Updated"}
+    }
+
+    result = await call_tool(
+        server,
+        "update_post",
+        {"entity_id": 1, "post_id": 10, "name": "Updated"},
+    )
+    mock_client.update_post.assert_called_once_with(1, 10, name="Updated")
+    data = json.loads(result[0].text)
+    assert data["data"]["name"] == "Updated"
+
+
+@pytest.mark.asyncio
+async def test_delete_post(server, mock_client):
+    mock_client.delete_post.return_value = {"message": "Entity deleted successfully"}
+
+    result = await call_tool(
+        server,
+        "delete_post",
+        {"entity_id": 1, "post_id": 10},
+    )
+    mock_client.delete_post.assert_called_once_with(1, 10)
+    data = json.loads(result[0].text)
+    assert data["message"] == "Entity deleted successfully"
