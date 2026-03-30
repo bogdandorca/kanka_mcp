@@ -103,3 +103,53 @@ async def test_http_error_returns_error_dict(client):
     result = await c.get_entity("characters", 999)
     assert "error" in result
     assert result["status_code"] == 404
+
+
+@pytest.mark.asyncio
+async def test_search(client):
+    c, responses = client
+    url = f"https://kanka.io/api/1.0/campaigns/{FAKE_CAMPAIGN_ID}/search/dragon"
+    responses[("GET", url)] = (200, {"data": [{"id": 5, "name": "Dragon Lord"}]})
+
+    result = await c.search("dragon")
+    assert result == {"data": [{"id": 5, "name": "Dragon Lord"}]}
+
+
+@pytest.mark.asyncio
+async def test_list_posts(client):
+    c, responses = client
+    url = f"https://kanka.io/api/1.0/campaigns/{FAKE_CAMPAIGN_ID}/entities/1/posts"
+    responses[("GET", url)] = (200, {"data": [{"id": 10, "name": "Backstory"}]})
+
+    result = await c.list_posts(1)
+    assert result == {"data": [{"id": 10, "name": "Backstory"}]}
+
+
+@pytest.mark.asyncio
+async def test_create_post(client):
+    c, responses = client
+    url = f"https://kanka.io/api/1.0/campaigns/{FAKE_CAMPAIGN_ID}/entities/1/posts"
+    responses[("POST", url)] = (201, {"data": {"id": 11, "name": "New Note"}})
+
+    result = await c.create_post(1, name="New Note", entry="Some text")
+    assert result == {"data": {"id": 11, "name": "New Note"}}
+
+
+@pytest.mark.asyncio
+async def test_update_post(client):
+    c, responses = client
+    url = f"https://kanka.io/api/1.0/campaigns/{FAKE_CAMPAIGN_ID}/entities/1/posts/10"
+    responses[("PUT", url)] = (200, {"data": {"id": 10, "name": "Updated"}})
+
+    result = await c.update_post(1, 10, name="Updated")
+    assert result == {"data": {"id": 10, "name": "Updated"}}
+
+
+@pytest.mark.asyncio
+async def test_delete_post(client):
+    c, responses = client
+    url = f"https://kanka.io/api/1.0/campaigns/{FAKE_CAMPAIGN_ID}/entities/1/posts/10"
+    responses[("DELETE", url)] = (204, None)
+
+    result = await c.delete_post(1, 10)
+    assert result == {"message": "Entity deleted successfully"}
