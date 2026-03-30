@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 
 
-BASE_URL = "https://kanka.io/api/1.0"
+BASE_URL = "https://api.kanka.io/1.0"
 
 
 class KankaClient:
